@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <link href="../css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="../css/cytoscape.js-panzoom.css" rel="stylesheet" type="text/css" />
+    <link href="../css/cytoscape.js-navigator.css" rel="stylesheet" type="text/css" />
+    <link href="../css/font-awesome-4.0.3/css/font-awesome.css" rel="stylesheet" type="text/css" />
+    <style>
+        #cy {
+            height: 500px;
+            width: 500px;
+        }
+    </style>
+
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-md-7">
+            <div id="cy"></div>
+        </div>
+        <div class="col-md-3">
+
+            <div style="padding-top:30px">
+                <span  onMouseOut="document.body.style.cursor='auto'" onMouseOver="document.body.style.cursor='pointer'"><a id="png"><span class="glyphicon glyphicon-save"></span>&nbsp;&nbsp;Export as png</a></span><br/>
+                <span  onMouseOut="document.body.style.cursor='auto'" onMouseOver="document.body.style.cursor='pointer'"><a id="jpg"><span class="glyphicon glyphicon-save"></span>&nbsp;&nbsp;Export as pdf</a></span>
+            </div>
+            <div style="padding-top: 20px;">
+                <ul class="list-group">
+                    <li id="circle" class="list-group-item" onMouseOut="document.body.style.cursor='auto'" onMouseOver="document.body.style.cursor='pointer'">circle</li>
+                    <li id="cose" class="list-group-item" onMouseOut="document.body.style.cursor='auto'" onMouseOver="document.body.style.cursor='pointer'">cose</li>
+                    <li id="random" class="list-group-item" onMouseOut="document.body.style.cursor='auto'" onMouseOver="document.body.style.cursor='pointer'">random</li>
+                    <li id="grid" class="list-group-item" onMouseOut="document.body.style.cursor='auto'" onMouseOver="$(this).css('cursor','pointer')">grid</li>
+                    <li id="concentric" class="list-group-item" onMouseOut="document.body.style.cursor='auto'" onMouseOver="document.body.style.cursor='pointer'">concentric</li>
+                </ul>
+            </div>
+            <p><strong>Bird' eye</strong></p>
+            <div id="navigator" style="width:350px;height:150px;position:relative;"></div>
+        </div>
+
+    </div>
+</div>
+
+
+
+
+<script src="../js/jquery-1.12.1.min.js"></script>
+<script src="../js/bootstrap.min.js"></script>
+<script src="../js/cytoscape.min.js"></script>
+<script src="../js/cytoscape.js"></script>
+<script src="../js/cytoscape-panzoom.js"></script>
+<script src="../js/cytoscape-graphml.js"></script>
+<script src="../js/cytoscape-navigator.js"></script>
+<script>
+    function downloadFile(element,fileName,content){
+        element.attr("download",fileName);
+        element.attr("href",content);
+    }
+    var cy = cytoscape({
+        // very commonly used options
+
+        //指定div id
+        container: document.getElementById('cy'),
+
+        //JSON数据，点和边(包括属性)
+        elements:{
+          nodes: [
+        { data: { id: 'j', name: 'Jerry' ,favorshape:'ellipse',nodeColor:'#999'} },
+        { data: { id: 'e', name: 'Elaine',favorshape:'triangle',nodeColor:'#971' } },
+        { data: { id: 'k', name: 'Kramer',favorshape:'roundrectangle',nodeColor:'#899' } },
+        { data: { id: 'g', name: 'George',favorshape:'barrel',nodeColor:'#998' } }
+    ],
+            edges: [
+        { data: {id:'je', weight: 1, source: 'j', target: 'e',edgeColor:"#6FB1FC" } },
+        { data: {id:'jk', weight: 2, source: 'j', target: 'k',edgeColor:"#6FB1FC" } },
+        { data: {id:'jg', weight: 3, source: 'j', target: 'g',edgeColor:"#6FB1FC" } },
+        { data: {id:'ej', weight: 4, source: 'e', target: 'j',edgeColor:"#EDA1ED" } },
+        { data: {id:'ek', weight: 5, source: 'e', target: 'k',edgeColor:"#EDA1ED" } },
+        { data: {id:'kj', weight: 6, source: 'k', target: 'j',edgeColor:"#86B342" } },
+        { data: {id:'ke', weight: 7, source: 'k', target: 'e',edgeColor:"#86B342" } },
+        { data: {id:'kg', weight: 8, source: 'k', target: 'g',edgeColor:"#86B342" } },
+        { data: {id:'gj', weight: 9, source: 'g', target: 'j',edgeColor:"#F5A45D" } }
+            ]
+        },
+        //设置样式
+        style: cytoscape.stylesheet()
+                .selector('node') //点的样式  官网Node Body
+                .css({
+                    'content': 'data(name)', //每个node显示的名字
+                    'text-valign': 'center',
+                    'color': 'white',
+                    'text-outline-width': 2,
+                    'background-color': 'data(nodeColor)', //每个node的背景色
+                    'text-outline-color': '#999',
+                    'shape': 'data(favorshape)'  //每个节点的形状
+
+                })
+                .selector('edge')  //边的样式
+                .css({
+                    'curve-style': 'bezier',
+                    'target-arrow-shape': 'triangle',
+                    'target-arrow-color': '#ccc',
+                    'line-color': 'data(edgeColor)',  //每个边的颜色
+                    'width': 'mapData(weight,1,100,1,5)' //每个边的宽度，根据权重按照比例尺计算得到
+                })
+                .selector(':selected') //选择元素的样式
+                .css({
+                    'background-color': 'black',
+                    'line-color': 'black',
+                    'target-arrow-color': 'black',
+                    'source-arrow-color': 'black'
+                }),
+        //网络图的布局
+        layout: {
+            name: 'grid',
+            padding: 30
+        },
+        //网络图生成后，有一个反馈
+        ready:function(){
+            $('#circle').click(function(){
+                var layout = cy.layout({ name: 'circle' });
+                layout.run();
+            });
+            $('#random').click(function(){
+                var layout = cy.layout({ name: 'random' });
+                layout.run();
+            });
+            $('#grid').click(function(){
+                var layout = cy.layout({ name: 'grid' });
+                layout.run();
+            });
+            $('#concentric').click(function(){
+                var layout = cy.layout({ name: 'concentric' });
+                layout.run();
+            });
+            $('#cose').click(function(){
+                var layout = cy.layout({ name: 'cose' });
+                layout.run();
+            });
+        }
+
+    });
+
+
+    // the default values of each option are outlined below:
+    var panzoom = {
+        zoomFactor: 0.05, // zoom factor per zoom tick
+        zoomDelay: 45, // how many ms between zoom ticks
+        minZoom: 0.1, // min zoom level
+        maxZoom: 10, // max zoom level
+        fitPadding: 50, // padding when fitting
+        panSpeed: 10, // how many ms in between pan ticks
+        panDistance: 10, // max pan distance per tick
+        panDragAreaSize: 75, // the length of the pan drag box in which the vector for panning is calculated (bigger = finer control of pan speed and direction)
+        panMinPercentSpeed: 0.25, // the slowest speed we can pan by (as a percent of panSpeed)
+        panInactiveArea: 8, // radius of inactive area in pan drag box
+        panIndicatorMinOpacity: 0.5, // min opacity of pan indicator (the draggable nib); scales from this to 1.0
+        zoomOnly: false, // a minimal version of the ui only with zooming (useful on systems with bad mousewheel resolution)
+        fitSelector: undefined, // selector of elements to fit
+        animateOnFit: function(){ // whether to animate on fit
+            return false;
+        },
+        fitAnimationDuration: 1000, // duration of animation on fit
+        // icon class names
+        sliderHandleIcon: 'fa fa-minus',
+        zoomInIcon: 'fa fa-plus',
+        zoomOutIcon: 'fa fa-minus',
+        resetIcon: 'fa fa-expand'
+    };
+    cy.panzoom(panzoom);//加panzoom 需要引入cytoscape-panzoom.js和cytoscape.js-panzoom.css，font-awesome.css
+
+    var nav = cy.navigator({  //必须叫defaults
+        container: $("#navigator") // can be a HTML or jQuery element or jQuery selector
+        , viewLiveFramerate: 0 // set false to update graph pan only on drag end; set 0 to do it instantly; set a number (frames per second) to update not more than N times per second
+        , thumbnailEventFramerate: 30 // max thumbnail's updates per second triggered by graph updates
+        , thumbnailLiveFramerate: false // max thumbnail's updates per second. Set false to disable
+        , dblClickDelay: 200 // milliseconds
+        , removeCustomContainer: true // destroy the container specified by user on plugin destroy
+        , rerenderDelay: 100 // ms to throttle rerender updates to the panzoom for performance
+    }); //加导航 需要引入cytoscape-navigator.js和cytoscape.js-navigator.css
+
+
+    cy.ready(function(){
+                downloadFile($("#png"),"a.png",cy.png());
+                downloadFile($("#jpg"),"a.png",cy.png());
+            }
+    )
+
+    cy.on('mouseover','node',function(evt){
+        //alert(evt.target);
+        cy.style()
+                .selector(this)
+                .style({
+                    'background-color': 'yellow'
+                }).update();
+    }).on('mouseout','node',function(evt){
+        cy.style()
+                .selector(this)
+                .style({
+                    'backgroud-color': 'data(nodeColor)'
+                }).update();
+    });
+
+
+
+
+
+
+</script>
+</body>
+</html>

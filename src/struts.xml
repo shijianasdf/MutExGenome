@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN" "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+   <!--   <constant name="struts.enable.DynamicMethodInvocation" value="false" /> -->
+	<constant name="struts.devMode" value="false" />	
+	<constant name="struts.multipart.maxSize" value="2048000000"/>
+	<package name="default" extends="struts-default,json-default" namespace="/">    
+	    <default-action-ref name="index"></default-action-ref> 
+		
+		<global-results>
+			<result name="error">error.jsp</result>
+		</global-results>
+		
+		<global-exception-mappings>
+			<exception-mapping exception="java.lang.Exception" result="error" />
+		</global-exception-mappings>
+		
+		<action name="index">
+			<result>index.jsp</result>
+		</action>
+		
+		<action name="Submit" class="actions.SubmitAction" method="Submit">
+			<result name="success" type="json">
+				<param name="includeProperties">message</param>
+			</result>
+		</action>
+		
+		<action name="Tree!*" class="actions.TreeAction" method="{1}">
+			<result name="success" type="json">
+				<param name="includeProperties">treeNodes</param>
+			</result>
+		</action>
+		
+		
+		<action name="Memain!*" class="actions.MemainAction" method="{1}">
+			<result name="success" type="json">
+				<param name="includeProperties">nodes,edges,resultTable,inputNodes</param>
+			</result>
+			<result name="InnerSuccess" type="json">
+				<param name="includeProperties">nodes,edges,resultTable</param>
+			</result>
+			<result name="DetailSuccess">DetailSearch.jsp</result>
+			<result name="NodeSuccess" type="json">
+				<param name="includeProperties">nodes,edges,node,resultTable</param>
+			</result>
+			<result name="QuickSuccess">QuickSearch.jsp</result>
+		</action>
+		
+			
+	  </package>
+</struts>
